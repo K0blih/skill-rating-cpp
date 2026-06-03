@@ -38,6 +38,14 @@ bool as_bool(const Json& json, std::string_view label) {
     return json.get<bool>();
 }
 
+RatingGroups parse_draw_probability_groups(const Json& request) {
+    const Json* rating_groups = find(request, "rating_groups");
+    if (rating_groups != nullptr) {
+        return parse_rating_groups(*rating_groups);
+    }
+    return {{parse_rating(require(request, "first_player"))}, {parse_rating(require(request, "second_player"))}};
+}
+
 } // namespace
 
 std::string run_command(std::string_view command, std::string_view request_body) {
@@ -75,6 +83,11 @@ std::string run_command(std::string_view command, std::string_view request_body)
     }
     if (command == "expose") {
         return Json{{"exposure", env.expose(parse_rating(require(request, "rating")))}}.dump();
+    }
+    if (command == "draw-probability") {
+        const RatingGroups groups = parse_draw_probability_groups(request);
+        const Weights weights = parse_weights(find(request, "weights"));
+        return Json{{"draw_probability", env.draw_probability(groups, weights)}}.dump();
     }
 
     throw std::invalid_argument("unknown command: " + std::string(command));

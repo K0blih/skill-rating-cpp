@@ -6,10 +6,11 @@ C++ implementation of a Bayesian skill rating algorithm
 This repository currently provides the core C++20 library, a basic JSON CLI, and
 a basic JSON HTTP service.
 
-The HTTP service is intentionally basic. It is suitable for local development
-and controlled internal use, but should not be exposed directly to the public
-internet without TLS termination, authentication, request limits, logging, and
-monitoring.
+The HTTP service is intended for local development and controlled internal use.
+It handles concurrent local requests with a configurable worker pool. Public
+exposure, TLS termination, authentication, persistence, queueing, retries,
+logging, and monitoring are responsibilities of the application that embeds or
+calls it.
 
 ## Current capabilities
 
@@ -19,6 +20,7 @@ monitoring.
 - Use partial-play weights for players who contributed less than a full match.
 - Use zero weights for players who did not participate; they are returned unchanged.
 - Compute match quality for one-vs-one and multi-team matches.
+- Compute draw probability for one-vs-one and two-team matches.
 - Compute conservative exposure as `mu - 3 * sigma`.
 - Convert between draw probability and draw margin.
 
@@ -114,7 +116,7 @@ mkdir -p build
 cd build
 cmake .. -DSKILL_RATING_BUILD_HTTP=ON
 make -j
-./skill_rating_http --host 127.0.0.1 --port 8080
+./skill_rating_http --host 127.0.0.1 --port 8080 --workers 8
 ```
 
 In another shell:

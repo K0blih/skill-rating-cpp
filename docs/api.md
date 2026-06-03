@@ -30,6 +30,8 @@ Important methods:
 - `rate_1vs1(...)` is a convenience wrapper for head-to-head matches.
 - `quality(...)` estimates how balanced a match is.
 - `quality_1vs1(...)` is a convenience wrapper for head-to-head quality.
+- `draw_probability(...)` estimates the chance that exactly two teams draw.
+- `draw_probability_1vs1(...)` is a convenience wrapper for head-to-head draw probability.
 - `expose(...)` returns `mu - 3 * sigma`.
 
 ## Match Results and Output Ordering
@@ -94,9 +96,23 @@ Weight rules:
 - A weight of `0.0` means the player did not participate; their returned rating is unchanged.
 - Each team must have at least one player with positive weight.
 
+## Draw Probability
+
+`draw_probability(rating_groups, weights)` accepts exactly two teams. It uses the
+environment's configured draw probability to derive the internal draw margin,
+then combines team means, uncertainties, weights, and beta to estimate the
+chance that those two teams draw.
+
+Free-for-all draw probability is not supported. The rating algorithm supports
+free-for-all rating updates and quality, but draw probability is intentionally a
+two-team API.
+
 ## Draw Helpers
 
 - `calc_draw_margin(draw_probability, player_count, beta)`
 - `calc_draw_probability(draw_margin, player_count, beta)`
 
-These are public because CLI and HTTP frontends will likely expose them.
+These are low-level helpers for converting between the model's configured draw
+probability and the internal draw margin threshold. The CLI and HTTP frontends
+expose a higher-level match draw probability command that accepts player or team
+ratings directly.

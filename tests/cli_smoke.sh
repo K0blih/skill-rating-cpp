@@ -25,6 +25,18 @@ contains "$quality_1vs1" '"quality":0.4472135954'
 exposure="$("$cli" expose '{"rating":{"mu":29.396,"sigma":7.171}}')"
 contains "$exposure" '"exposure":7.882'
 
+draw_probability="$("$cli" draw-probability '{"first_player":{"mu":25,"sigma":8.333333333333},"second_player":{"mu":25,"sigma":8.333333333333}}')"
+contains "$draw_probability" '"draw_probability":0.0448154975'
+
+team_draw_probability="$("$cli" draw-probability '{"rating_groups":[[{"mu":25,"sigma":8.333333333333},{"mu":27,"sigma":6}],[{"mu":26,"sigma":7}]],"weights":[[1,0.5],[1]]}')"
+contains "$team_draw_probability" '"draw_probability":0.0350737324'
+
+if "$cli" draw-probability '{"rating_groups":[[{"mu":25,"sigma":8.333333333333}],[{"mu":25,"sigma":8.333333333333}],[{"mu":25,"sigma":8.333333333333}]]}' >/tmp/skill_rating_cli_draw_error.out 2>/tmp/skill_rating_cli_draw_error.err; then
+    echo "expected free-for-all draw probability request to fail" >&2
+    exit 1
+fi
+contains "$(cat /tmp/skill_rating_cli_draw_error.err)" 'free-for-all draw probability is not supported'
+
 rate="$("$cli" rate '{"rating_groups":[[{"mu":32,"sigma":7}],[{"mu":25,"sigma":8.333333333333},{"mu":27,"sigma":6}],[{"mu":20,"sigma":8}]],"ranks":[1,0,2],"weights":[[1],[1,0.5],[1]]}')"
 contains "$rate" '"rating_groups"'
 contains "$rate" '28.391918161'

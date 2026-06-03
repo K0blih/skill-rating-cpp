@@ -26,6 +26,8 @@ using detail::update_prior;
 using detail::update_sum;
 using detail::update_trunc;
 
+constexpr int kMaxRateIterations = 100;
+
 void validate_rating(const Rating& rating) {
     if (!std::isfinite(rating.mu)) {
         throw std::invalid_argument("rating mu must be finite");
@@ -87,6 +89,12 @@ std::size_t positive_weight_count(const std::vector<double>& weights) {
     return static_cast<std::size_t>(std::count_if(weights.begin(), weights.end(), [](double weight) {
         return weight > 0.0;
     }));
+}
+
+std::size_t active_player_count(const Weights& weights) {
+    return std::accumulate(weights.begin(), weights.end(), std::size_t{0}, [](std::size_t total, const auto& team_weights) {
+        return total + positive_weight_count(team_weights);
+    });
 }
 
 std::vector<int> normalized_ranks(const RatingGroups& groups, const std::vector<int>& ranks) {
@@ -158,6 +166,7 @@ RatingGroups Environment::rate(
     }
     const Weights group_weights = normalized_weights(rating_groups, weights);
     validate_participating_teams(rating_groups, group_weights);
+    const std::size_t total_active_players = active_player_count(group_weights);
     const std::vector<int> group_ranks = normalized_ranks(rating_groups, ranks);
     const std::vector<std::size_t> order = rank_order(group_ranks);
 
@@ -168,13 +177,14 @@ RatingGroups Environment::rate(
     std::vector<Gaussian> prior_messages;
     std::vector<Gaussian> perf_to_rating_messages;
     std::vector<Gaussian> rating_to_perf_messages;
-    prior_messages.reserve(32);
-    perf_to_rating_messages.reserve(32);
-    rating_to_perf_messages.reserve(32);
+    prior_messages.reserve(total_active_players);
+    perf_to_rating_messages.reserve(total_active_players);
+    rating_to_perf_messages.reserve(total_active_players);
 
     for (std::size_t sorted_i = 0; sorted_i < order.size(); ++sorted_i) {
         const std::size_t original_i = order[sorted_i];
         const auto& team = rating_groups[original_i];
+        active_players[sorted_i].reserve(positive_weight_count(group_weights[original_i]));
         for (std::size_t player = 0; player < team.size(); ++player) {
             if (group_weights[original_i][player] > 0.0) {
                 active_players[sorted_i].push_back(player);
@@ -205,6 +215,9 @@ RatingGroups Environment::rate(
     team_layers.reserve(order.size());
     for (std::size_t sorted_i = 0; sorted_i < order.size(); ++sorted_i) {
         SumLayer layer;
+        layer.variables.reserve(active_players[sorted_i].size() + 1);
+        layer.messages.reserve(active_players[sorted_i].size() + 1);
+        layer.coeffs.reserve(active_players[sorted_i].size() + 1);
         layer.variables.push_back(&team_perf_vars[sorted_i]);
         layer.messages.push_back({});
         layer.coeffs.push_back(1.0);
@@ -239,7 +252,7 @@ RatingGroups Environment::rate(
         draws[i] = group_ranks[left] == group_ranks[right];
     }
 
-    for (int iteration = 0; iteration < 100; ++iteration) {
+    for (int iteration = 0; iteration < kMaxRateIterations; ++iteration) {
         double delta = 0.0;
         for (auto& layer : diff_layers) {
             delta = std::max(delta, update_sum(layer.variables, layer.messages, layer.coeffs, 0));
@@ -254,7 +267,7 @@ RatingGroups Environment::rate(
         if (delta <= min_delta) {
             break;
         }
-        if (iteration == 99) {
+        if (iteration == kMaxRateIterations - 1) {
             throw std::runtime_error("Bayesian skill rating rate update did not converge");
         }
     }
@@ -288,6 +301,7 @@ double Environment::quality(const RatingGroups& rating_groups, const Weights& we
     validate_groups(rating_groups);
     const Weights group_weights = normalized_weights(rating_groups, weights);
     validate_participating_teams(rating_groups, group_weights);
+    const std::size_t total_active_players = active_player_count(group_weights);
     const std::size_t team_count = rating_groups.size();
     const std::size_t diff_count = team_count - 1;
 
@@ -297,6 +311,8 @@ double Environment::quality(const RatingGroups& rating_groups, const Weights& we
 
     std::vector<std::vector<double>> player_coeffs;
     std::vector<double> variances;
+    player_coeffs.reserve(total_active_players);
+    variances.reserve(total_active_players);
     for (std::size_t team = 0; team < team_count; ++team) {
         for (std::size_t player = 0; player < rating_groups[team].size(); ++player) {
             if (group_weights[team][player] == 0.0) {
@@ -342,6 +358,38 @@ double Environment::quality(const RatingGroups& rating_groups, const Weights& we
     return std::clamp(sqrt_part * std::exp(exponent), 0.0, 1.0);
 }
 
+double Environment::draw_probability(const RatingGroups& rating_groups, const Weights& weights) const {
+    validate_groups(rating_groups);
+    if (rating_groups.size() != 2) {
+        throw std::invalid_argument("free-for-all draw probability is not supported");
+    }
+    const Weights group_weights = normalized_weights(rating_groups, weights);
+    validate_participating_teams(rating_groups, group_weights);
+
+    double mean = 0.0;
+    double variance = 0.0;
+    std::size_t player_count = 0;
+    for (std::size_t team = 0; team < rating_groups.size(); ++team) {
+        const double team_sign = team == 0 ? 1.0 : -1.0;
+        for (std::size_t player = 0; player < rating_groups[team].size(); ++player) {
+            const double weight = group_weights[team][player];
+            if (weight == 0.0) {
+                continue;
+            }
+            ++player_count;
+            const double coeff = team_sign * weight;
+            mean += coeff * rating_groups[team][player].mu;
+            variance += square(coeff) * (square(rating_groups[team][player].sigma) + square(beta_));
+        }
+    }
+
+    const double draw_margin = calc_draw_margin(draw_probability_, player_count, beta_);
+    const double stddev = std::sqrt(variance);
+    const double probability =
+        detail::normal_cdf((draw_margin - mean) / stddev) - detail::normal_cdf((-draw_margin - mean) / stddev);
+    return std::clamp(probability, 0.0, 1.0);
+}
+
 std::pair<Rating, Rating> Environment::rate_1vs1(
     const Rating& first_player,
     const Rating& second_player,
@@ -353,6 +401,10 @@ std::pair<Rating, Rating> Environment::rate_1vs1(
 
 double Environment::quality_1vs1(const Rating& a, const Rating& b) const {
     return quality({{a}, {b}});
+}
+
+double Environment::draw_probability_1vs1(const Rating& a, const Rating& b) const {
+    return draw_probability({{a}, {b}});
 }
 
 double calc_draw_margin(double draw_probability, std::size_t player_count, double beta) {

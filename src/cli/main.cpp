@@ -36,7 +36,8 @@ void print_usage() {
         << "  rate-1vs1     Update two players. Input keys: first_player, second_player, optional drawn, environment, min_delta.\n"
         << "  quality       Compute arbitrary-team match quality. Input keys: rating_groups, optional weights, environment.\n"
         << "  quality-1vs1  Compute two-player match quality. Input keys: first_player, second_player, optional environment.\n"
-        << "  expose        Compute conservative exposure. Input keys: rating, optional environment.\n";
+        << "  expose        Compute conservative exposure. Input keys: rating, optional environment.\n"
+        << "  draw-probability  Compute draw probability. Input keys: first_player/second_player or two rating_groups, optional weights, environment.\n";
 }
 
 int run(int argc, char** argv) {

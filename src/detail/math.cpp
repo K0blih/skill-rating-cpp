@@ -10,6 +10,7 @@ namespace skill_rating::detail {
 namespace {
 
 constexpr double kPi = 3.141592653589793238462643383279502884;
+constexpr int kInverseNormalRefinementIterations = 2;
 
 } // namespace
 
@@ -71,7 +72,7 @@ double inverse_normal_cdf(double p) {
             ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0);
     }
 
-    for (int i = 0; i < 2; ++i) {
+    for (int i = 0; i < kInverseNormalRefinementIterations; ++i) {
         const double error = normal_cdf(x) - p;
         x -= error / normal_pdf(x);
     }

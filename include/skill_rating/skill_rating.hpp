@@ -41,6 +41,10 @@ public:
 
     [[nodiscard]] double quality(const RatingGroups& rating_groups, const Weights& weights = {}) const;
 
+    // Computes the predictive probability that exactly two teams draw.
+    // Free-for-all draw probability is not supported.
+    [[nodiscard]] double draw_probability(const RatingGroups& rating_groups, const Weights& weights = {}) const;
+
     // Updates a head-to-head match. If drawn is false, first_player is the
     // winner and second_player is the loser. If drawn is true, both players are
     // treated as tied. The returned pair matches the input order.
@@ -51,6 +55,7 @@ public:
         double min_delta = 0.0001) const;
 
     [[nodiscard]] double quality_1vs1(const Rating& a, const Rating& b) const;
+    [[nodiscard]] double draw_probability_1vs1(const Rating& a, const Rating& b) const;
 
 private:
     double mu_;

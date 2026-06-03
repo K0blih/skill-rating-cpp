@@ -54,6 +54,7 @@ void one_vs_one_quality() {
     const skill_rating::Environment env;
     const auto rating = env.create_rating();
     check_near(env.quality_1vs1(rating, rating), 0.447, 0.001, "1v1 quality");
+    check_near(env.draw_probability_1vs1(rating, rating), 0.0448, 0.0001, "1v1 draw probability");
 }
 
 void one_vs_one_win() {
@@ -107,6 +108,7 @@ void partial_play_weights() {
     check(full_weight[0][0].mu > rating.mu, "full-weight winner should gain rating");
     check(std::isfinite(half_weight[0][0].mu), "partial-weight update should remain finite");
     check(std::isfinite(env.quality({{rating}, {rating}}, {{{0.5}}, {{1.0}}})), "partial-weight quality should remain finite");
+    check(std::isfinite(env.draw_probability({{rating}, {rating}}, {{{0.5}}, {{1.0}}})), "partial-weight draw probability should remain finite");
 }
 
 void zero_weight_players_are_unchanged() {
@@ -163,6 +165,7 @@ void validation_errors() {
     check_throws([&] { static_cast<void>(env.rate({{rating}, {rating}}, {}, {{{1.0}}})); }, "weight count mismatch");
     check_throws([&] { static_cast<void>(env.rate({{rating}, {rating}}, {}, {{{0.0}}, {{1.0}}})); }, "team with no positive weight");
     check_throws([&] { static_cast<void>(env.quality({{rating}, {rating}}, {{{1.0}}, {{0.0}}})); }, "quality team with no positive weight");
+    check_throws([&] { static_cast<void>(env.draw_probability({{rating}, {rating}, {rating}})); }, "free-for-all draw probability");
     check_throws([] { skill_rating::Environment(25.0, 0.0, 1.0, 1.0, 0.1); }, "invalid sigma");
     check_throws([] { skill_rating::Environment(25.0, 1.0, 1.0, 1.0, 1.0); }, "invalid draw probability");
 }

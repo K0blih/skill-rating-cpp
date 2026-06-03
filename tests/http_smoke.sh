@@ -11,7 +11,7 @@ contains() {
     esac
 }
 
-"$server" --host 127.0.0.1 --port "$port" >/tmp/skill_rating_http_test.log 2>&1 &
+"$server" --host 127.0.0.1 --port "$port" --workers 2 >/tmp/skill_rating_http_test.log 2>&1 &
 pid="$!"
 trap 'kill "$pid" 2>/dev/null || true' EXIT
 
@@ -27,9 +27,10 @@ test "$health" = '{"status":"ok"}'
 
 quality="$(curl -fsS \
     -H 'Content-Type: application/json' \
-    -d '{"rating_groups":[[{"mu":25,"sigma":8.333333333333}],[{"mu":25,"sigma":8.333333333333}]]}' \
+    -d '{"request_id":"quality-1","rating_groups":[[{"mu":25,"sigma":8.333333333333}],[{"mu":25,"sigma":8.333333333333}]]}' \
     "http://127.0.0.1:$port/quality")"
 contains "$quality" '"quality":0.4472135954'
+contains "$quality" '"request_id":"quality-1"'
 
 rate_1vs1="$(curl -fsS \
     -H 'Content-Type: application/json' \
@@ -51,6 +52,13 @@ exposure="$(curl -fsS \
     "http://127.0.0.1:$port/expose")"
 contains "$exposure" '"exposure":7.882'
 
+draw_probability="$(curl -fsS \
+    -H 'Content-Type: application/json' \
+    -d '{"request_id":"draw-probability-1","first_player":{"mu":25,"sigma":8.333333333333},"second_player":{"mu":25,"sigma":8.333333333333}}' \
+    "http://127.0.0.1:$port/draw-probability")"
+contains "$draw_probability" '"draw_probability":0.0448154975'
+contains "$draw_probability" '"request_id":"draw-probability-1"'
+
 rate="$(curl -fsS \
     -H 'Content-Type: application/json' \
     -d '{"rating_groups":[[{"mu":32,"sigma":7}],[{"mu":25,"sigma":8.333333333333},{"mu":27,"sigma":6}],[{"mu":20,"sigma":8}]],"ranks":[1,0,2],"weights":[[1],[1,0.5],[1]]}' \
@@ -61,10 +69,11 @@ contains "$rate" '17.815292649'
 
 bad_status="$(curl -sS -o /tmp/skill_rating_http_bad.json -w '%{http_code}' \
     -H 'Content-Type: application/json' \
-    -d '{"rating_groups":[[{"mu":25,"sigma":8.333333333333}]]}' \
+    -d '{"request_id":"bad-quality","rating_groups":[[{"mu":25,"sigma":8.333333333333}]]}' \
     "http://127.0.0.1:$port/quality")"
 test "$bad_status" = "400"
 contains "$(cat /tmp/skill_rating_http_bad.json)" 'at least two teams are required'
+contains "$(cat /tmp/skill_rating_http_bad.json)" '"request_id":"bad-quality"'
 
 missing_status="$(curl -sS -o /tmp/skill_rating_http_missing.json -w '%{http_code}' \
     "http://127.0.0.1:$port/missing")"
