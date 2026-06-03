@@ -59,6 +59,12 @@ draw_probability="$(curl -fsS \
 contains "$draw_probability" '"draw_probability":0.0448154975'
 contains "$draw_probability" '"request_id":"draw-probability-1"'
 
+environment_draw_probability="$(curl -fsS \
+    -H 'Content-Type: application/json' \
+    -d '{"environment":{"mu":30,"sigma":10,"beta":5,"tau":0.2,"draw_probability":0.2},"first_player":{"mu":30,"sigma":10},"second_player":{"mu":30,"sigma":10}}' \
+    "http://127.0.0.1:$port/draw-probability")"
+contains "$environment_draw_probability" '"draw_probability":0.0902074959'
+
 rate="$(curl -fsS \
     -H 'Content-Type: application/json' \
     -d '{"rating_groups":[[{"mu":32,"sigma":7}],[{"mu":25,"sigma":8.333333333333},{"mu":27,"sigma":6}],[{"mu":20,"sigma":8}]],"ranks":[1,0,2],"weights":[[1],[1,0.5],[1]]}' \

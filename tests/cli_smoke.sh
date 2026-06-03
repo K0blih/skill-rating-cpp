@@ -28,6 +28,9 @@ contains "$exposure" '"exposure":7.882'
 draw_probability="$("$cli" draw-probability '{"first_player":{"mu":25,"sigma":8.333333333333},"second_player":{"mu":25,"sigma":8.333333333333}}')"
 contains "$draw_probability" '"draw_probability":0.0448154975'
 
+environment_draw_probability="$("$cli" draw-probability '{"environment":{"mu":30,"sigma":10,"beta":5,"tau":0.2,"draw_probability":0.2},"first_player":{"mu":30,"sigma":10},"second_player":{"mu":30,"sigma":10}}')"
+contains "$environment_draw_probability" '"draw_probability":0.0902074959'
+
 team_draw_probability="$("$cli" draw-probability '{"rating_groups":[[{"mu":25,"sigma":8.333333333333},{"mu":27,"sigma":6}],[{"mu":26,"sigma":7}]],"weights":[[1,0.5],[1]]}')"
 contains "$team_draw_probability" '"draw_probability":0.0350737324'
 
