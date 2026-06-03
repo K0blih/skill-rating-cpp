@@ -66,7 +66,7 @@ on frontend JSON or HTTP dependencies.
 
 ## `src/cli/main.cpp`
 
-This file implements the basic JSON CLI.
+This file implements the JSON CLI.
 
 Responsibilities:
 
@@ -76,7 +76,7 @@ Responsibilities:
 
 ## `src/http/main.cpp`
 
-This file implements the basic HTTP service.
+This file implements the local JSON HTTP service.
 
 Responsibilities:
 
@@ -85,8 +85,9 @@ Responsibilities:
 - Return JSON responses and JSON errors.
 - Provide `GET /health` for smoke tests.
 
-The service is intentionally still simple: no TLS, authentication, metrics, or
-deployment packaging yet.
+The service is intentionally local-first: TLS, authentication, metrics, and
+deployment packaging are responsibilities of the embedding or calling
+application.
 
 ## `tests/skill_rating_tests.cpp`
 
@@ -97,7 +98,7 @@ directly:
 ./build/skill_rating_tests
 ```
 
-The tests currently cover default values, 1v1 quality, wins, draws, team
+The tests cover default values, 1v1 quality, wins, draws, team
 matches, ranks, partial-play weights, zero-weight players, custom environments,
 draw helper round trips, multi-team draws, and validation errors.
 

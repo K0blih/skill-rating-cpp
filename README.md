@@ -1,10 +1,10 @@
 # skill-rating-cpp
 C++ implementation of a Bayesian skill rating algorithm
 
-## Status
+## Release Status
 
-This repository currently provides the core C++20 library, a basic JSON CLI, and
-a basic JSON HTTP service.
+This repository is at the 1.0 release level. It provides the core C++20 library,
+a JSON CLI, and a local JSON HTTP service.
 
 The HTTP service is intended for local development and controlled internal use.
 It handles concurrent local requests with a configurable worker pool. Public
@@ -24,11 +24,12 @@ calls it.
 - Compute conservative exposure as `mu - 3 * sigma`.
 - Convert between draw probability and draw margin.
 
-## Planned additions
+## Release Scope
 
-- Richer CLI ergonomics, examples, and shell-completion support.
-- Richer HTTP service ergonomics, observability, and deployment examples.
-- Serialization helpers for common request/response formats.
+The 1.0 release focuses on the stable core rating API, installable CMake package,
+JSON CLI, local HTTP service, documentation, and smoke-test coverage. The CLI
+and HTTP targets are convenience frontends around the same shared JSON command
+layer used in tests.
 
 ## Build And Test
 

@@ -38,7 +38,7 @@ This avoids collisions with other libraries that might also have a file named
 
 ## Dependency-Light Core
 
-The core rating library currently uses only the C++ standard library.
+The core rating library uses only the C++ standard library.
 
 The CLI and HTTP service use `nlohmann/json` for JSON and `cpp-httplib` for the
 HTTP server. They are kept outside the core `skill_rating` target so library users
@@ -65,8 +65,8 @@ A factor graph handles those cases with one general update path.
 
 ## Plain Test Runner
 
-The tests do not use a third-party framework yet. The custom runner is enough for
-the current project size and keeps setup simple.
+The tests do not use a third-party framework. The custom runner is enough for
+the 1.0 project size and keeps setup simple.
 
 If test coverage grows substantially, moving to Catch2, doctest, or GoogleTest
 would be reasonable.

@@ -2,8 +2,8 @@
 
 ## Supported Versions
 
-This project is pre-1.0. Security fixes are handled on the default branch until
-versioned releases are introduced.
+Version 1.x is the supported release line. Security fixes are handled on the
+default branch and included in subsequent patch or minor releases.
 
 ## Reporting a Vulnerability
 
@@ -15,7 +15,7 @@ opening a public issue. Include:
 - expected impact
 - any suggested fix or mitigation
 
-The current HTTP service is intended for local development and controlled
-internal use. Do not expose it directly to the public internet without adding
-appropriate deployment controls such as TLS termination, authentication, request
-limits, logging, monitoring, and a reverse proxy.
+The HTTP service is intended for local development and controlled internal use.
+Do not expose it directly to the public internet without adding appropriate
+deployment controls such as TLS termination, authentication, request limits,
+logging, monitoring, and a reverse proxy.
